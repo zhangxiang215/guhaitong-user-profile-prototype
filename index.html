@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>用户画像应用-UI原型</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif; font-size:13px; color:#1d2129; background:#f0f2f5; overflow:hidden; }
+  button { font-family:inherit; cursor:pointer; }
+  input,select { font-family:inherit; outline:none; }
+  .scene { display:flex; height:100vh; }
+  .app { flex:1; display:flex; min-width:0; }
+
+  /* ================= 左侧导航 ================= */
+  .sidebar { width:232px; flex:0 0 232px; background:#1f2a3d; color:#b9c3d0; padding-top:12px; }
+  .menu-group { padding:14px 20px 8px; font-size:12px; color:#7d8b9f; }
+  .menu-item { height:42px; line-height:42px; padding:0 20px; cursor:pointer; position:relative; font-size:13.5px; }
+  .menu-item.active { background:#dfe8f3; color:#17427a; font-weight:600; }
+  .menu-item.active::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:#1677ff; }
+
+  .main { flex:1; display:flex; flex-direction:column; min-width:0; }
+  .topbar { height:48px; flex:0 0 48px; background:#fff; display:flex; align-items:center; padding:0 16px; box-shadow:0 1px 3px rgba(20,32,53,.06); position:relative; z-index:5; }
+  .logo { width:22px; height:22px; border-radius:5px; background:#1677ff; margin-right:9px; position:relative; }
+  .logo::after { content:""; position:absolute; left:6px; top:6px; width:10px; height:10px; border-radius:2px; border:2px solid #fff; }
+  .topbar .sys { font-size:15px; font-weight:600; color:#1d2129; }
+  .topbar .divi { width:1px; height:16px; background:#d6dbe3; margin:0 12px; }
+  .topbar .sub { font-size:14px; color:#4e5969; }
+  .topbar .acct { margin-left:auto; display:flex; align-items:center; gap:7px; color:#4e5969; }
+  .topbar .acct .dot { width:24px; height:24px; border-radius:50%; background:#dfe8f3; color:#17427a; font-size:12px; display:flex; align-items:center; justify-content:center; }
+  .content { flex:1; display:flex; flex-direction:column; gap:12px; padding:14px 16px; overflow:hidden; }
+  .panel { background:#fff; border-radius:4px; box-shadow:0 1px 3px rgba(20,32,53,.06); }
+  .page { display:none; flex-direction:column; gap:12px; flex:1; min-height:0; }
+  .page.active { display:flex; }
+
+  /* ================= 页面一：用户画像查询 ================= */
+  .filter-panel { flex:0 0 auto; display:flex; align-items:center; flex-wrap:wrap; gap:10px 14px; padding:13px 16px; }
+  .filter-panel label { color:#4e5969; }
+  .ipt { height:30px; border:1px solid #d6dbe3; border-radius:3px; padding:0 10px; width:280px; font-size:13px; }
+  .ipt:focus { border-color:#1677ff; }
+  .btn { height:30px; padding:0 16px; border-radius:3px; border:1px solid #d6dbe3; background:#fff; color:#1d2129; font-size:13px; }
+  .btn.primary { background:#1677ff; border-color:#1677ff; color:#fff; }
+  .cal-note { margin-left:auto; color:#4e5969; }
+  .cal-note b { color:#1d2129; font-weight:600; }
+
+  .warn-banner { display:none; flex:0 0 auto; align-items:center; gap:8px; background:#fdf6ec; border:1px solid #f5d9ab; color:#8a5b1f; border-radius:4px; padding:9px 14px; font-size:13px; }
+  .warn-banner.show { display:flex; }
+  .warn-banner .ico { width:15px; height:15px; border-radius:50%; background:#e6a23c; color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center; flex:0 0 15px; font-weight:700; }
+
+  .user-bar { flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:14px 18px; }
+  .avatar-img { width:52px; height:52px; border-radius:50%; object-fit:cover; flex:0 0 52px; }
+  .user-bar .uname { font-size:17px; font-weight:600; }
+  .user-bar .meta { color:#4e5969; }
+  .user-bar .meta span { margin-right:16px; }
+  .kpi-band { flex:0 0 auto; display:flex; padding:15px 8px; }
+  .kpi { flex:1; text-align:center; border-right:1px solid #f0f2f5; }
+  .kpi:last-child { border-right:none; }
+  .kpi .kl { font-size:12.5px; color:#4e5969; }
+  .kpi .kv { font-size:26px; font-weight:700; color:#1677ff; margin-top:6px; }
+  .kpi .kv .arrow { display:inline-block; font-size:13px; margin-left:5px; vertical-align:2px; }
+  .kpi .kv .arrow.up { color:#e5433c; }
+  .kpi .kv .arrow.dn { color:#2ea34e; }
+
+  .detail-wrap { flex:1; min-height:0; display:flex; gap:12px; }
+  .dim-card { flex:1; min-width:0; display:flex; flex-direction:column; overflow:visible; }
+  .card-head { height:44px; flex:0 0 44px; display:flex; align-items:center; padding:0 14px; border-bottom:1px solid #f0f2f5; border-radius:4px 4px 0 0; }
+  .card-head .bar { width:3px; height:13px; background:#1677ff; margin-right:8px; }
+  .card-head .tt { font-size:14px; font-weight:600; }
+  .dim-help { position:relative; margin-left:7px; width:15px; height:15px; border-radius:50%; background:#e8eef7; color:#4a7dc9; font-size:10.5px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; user-select:none; }
+  .dim-help:hover { background:#d5e3f7; }
+  .dim-help .tip { display:none; position:absolute; top:22px; left:50%; transform:translateX(-50%); width:236px; background:#232a35; color:#e8ecf2; font-size:11.5px; font-weight:400; line-height:1.65; padding:9px 11px; border-radius:6px; box-shadow:0 6px 20px rgba(20,32,53,.25); z-index:30; text-align:left; }
+  .dim-help .tip::before { content:""; position:absolute; top:-4px; left:50%; transform:translateX(-50%) rotate(45deg); width:8px; height:8px; background:#232a35; }
+  .dim-help .tip .tip-date { display:block; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,.16); color:#aab6c6; }
+  .dim-help:hover .tip, .dim-help.show .tip { display:block; }
+  .ws-dim .dh .dim-help { margin-left:auto; width:14px; height:14px; font-size:10px; }
+  .ws-dim .dh .dim-help .tip { width:196px; font-size:11px; left:auto; right:-6px; transform:none; }
+  .ws-dim .dh .dim-help .tip::before { left:auto; right:12px; transform:rotate(45deg); }
+  .card-body { flex:1; min-height:0; overflow:auto; padding:16px 16px 14px; display:flex; flex-direction:column; gap:16px; }
+  .tag { font-size:11px; line-height:1; padding:3px 6px; border-radius:2px; margin-left:8px; }
+  .tag.p { background:#fff3e8; color:#c97a2b; }
+  .muted { color:#c2c7d0 !important; font-weight:500 !important; }
+  /* 行为指标：tile 网格（一卡一指标，参考 CDP 画像看板 stat cards） */
+  .tiles { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .tile { background:#f7f9fc; border:1px solid #f0f2f5; border-radius:10px; padding:12px 14px; }
+  .tile .tl { font-size:12px; color:#4e5969; }
+  .tile .tv { font-size:20px; font-weight:700; color:#1d2129; margin-top:6px; letter-spacing:.2px; }
+  .tile .tv.muted { color:#c2c7d0; }
+  .chip { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:4px 12px; border-radius:20px; }
+  .chip.yes { background:#e8f7ee; color:#2ea34e; }
+  .chip.no { background:#f2f3f5; color:#86909c; }
+  /* 偏好排名：横向条形图（排序条形图是排名类数据的标准图形） */
+  .sec-h { font-size:12.5px; font-weight:600; color:#4e5969; display:flex; align-items:center; margin-bottom:2px; }
+  .rankbar-row { display:flex; align-items:center; gap:9px; height:34px; }
+  .rk2 { width:19px; height:19px; border-radius:50%; background:#eef1f5; color:#4e5969; font-size:11px; display:flex; align-items:center; justify-content:center; flex:0 0 19px; }
+  .rk2.top { background:#1677ff; color:#fff; }
+  .rnm { flex:0 1 auto; min-width:0; max-width:52%; display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:500; }
+  .rnm .nm-t { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:158px; }
+  .name-tip { position:fixed; display:none; max-width:320px; background:#232a35; color:#e8ecf2; font-size:12px; line-height:1.6; padding:6px 10px; border-radius:5px; box-shadow:0 6px 20px rgba(20,32,53,.28); z-index:9999; pointer-events:none; word-break:break-all; }
+  .rnm .tie { font-size:10.5px; color:#c97a2b; background:#fff3e8; border-radius:2px; padding:1.5px 4px; margin-left:5px; font-weight:400; white-space:nowrap; flex:0 0 auto; }
+  .bar-wrap { flex:1; height:7px; background:#f0f2f5; border-radius:4px; overflow:hidden; }
+  .bar-fill { display:block; height:100%; border-radius:4px; background:linear-gradient(90deg,#69b1ff,#1677ff); }
+  .rv { width:44px; flex:0 0 44px; text-align:right; font-size:13px; color:#4e5969; font-weight:500; }
+
+  .empty-panel { flex:1; display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+  .empty-panel.show { display:flex; }
+  .empty-panel .eico { width:64px; height:64px; border-radius:50%; background:#f2f3f5; display:flex; align-items:center; justify-content:center; }
+  .empty-panel .eico::after { content:""; width:26px; height:26px; border:3px solid #c2c7d0; border-radius:50%; }
+  .empty-panel .etxt { color:#86909c; font-size:14px; }
+
+  /* ================= 页面二：企微侧边栏应用 ================= */
+  .wecom-shell { flex:1; min-height:0; background:#fff; border-radius:4px; box-shadow:0 1px 3px rgba(20,32,53,.06); overflow:hidden; display:flex; }
+  .wecom { flex:1; min-width:0; background:#e8e9eb; display:flex; }
+  .wecom .wapp { display:flex; height:100%; flex:1; min-width:0; }
+  .wrail { width:60px; flex:0 0 60px; background:#2e3641; display:flex; flex-direction:column; align-items:center; padding-top:18px; gap:22px; }
+  .wrail .wlogo { width:30px; height:30px; border-radius:7px; background:#1677ff; margin-bottom:8px; position:relative; }
+  .wrail .wlogo::after { content:""; position:absolute; left:8px; top:8px; width:14px; height:14px; border-radius:3px; border:2px solid #fff; }
+  .wicon { width:34px; height:34px; border-radius:7px; display:flex; align-items:center; justify-content:center; }
+  .wicon svg { width:19px; height:19px; }
+  .wicon.on { background:rgba(255,255,255,.12); }
+  .wlist { width:238px; flex:0 0 238px; background:#f7f8fa; border-right:1px solid #e3e4e6; display:flex; flex-direction:column; }
+  .wlist .wsearch { margin:12px 12px 8px; height:28px; background:#eceef1; border-radius:4px; color:#9aa1ab; display:flex; align-items:center; padding:0 9px; font-size:12.5px; gap:6px; }
+  .wlist .witems { flex:1; overflow:hidden; }
+  .wli { display:flex; align-items:center; gap:10px; padding:11px 12px; }
+  .wli.on { background:#e6e9ed; }
+  .wava { width:36px; height:36px; border-radius:5px; flex:0 0 36px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; font-weight:600; }
+  .wli .wn { font-size:13.5px; color:#1d2129; }
+  .wli .wp { font-size:12px; color:#9aa1ab; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .wchat { flex:1; min-width:0; display:flex; flex-direction:column; background:#f5f6f7; }
+  .wchat .wchead { height:48px; flex:0 0 48px; background:#fff; border-bottom:1px solid #e8e9eb; display:flex; align-items:center; padding:0 18px; font-size:14.5px; font-weight:600; }
+  .wchat .wmsgs { flex:1; min-height:0; overflow:hidden; padding:18px 20px; display:flex; flex-direction:column; }
+  .mgroup { display:none; flex-direction:column; gap:14px; }
+  .mgroup.show { display:flex; }
+  .msg { display:flex; gap:10px; align-items:flex-start; }
+  .msg .mava { width:32px; height:32px; border-radius:5px; flex:0 0 32px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:600; }
+  .bubble { max-width:420px; padding:9px 12px; border-radius:4px; font-size:13.5px; line-height:1.55; }
+  .msg.cus .bubble { background:#fff; border-top-left-radius:0; }
+  .msg.me { flex-direction:row-reverse; }
+  .msg.me .bubble { background:#95ec69; border-top-right-radius:0; }
+  .msg .mava.me-ava { background:#1677ff; }
+  .mava-img { width:32px; height:32px; border-radius:5px; object-fit:cover; flex:0 0 32px; }
+  .wava-img { width:36px; height:36px; border-radius:5px; object-fit:cover; flex:0 0 36px; }
+  .wside { width:392px; flex:0 0 392px; background:#fff; border-left:1px solid #e3e4e6; display:flex; flex-direction:column; }
+  .wside .ws-head { height:44px; flex:0 0 44px; display:flex; align-items:center; padding:0 14px; border-bottom:1px solid #f0f2f5; }
+  .wside .ws-head .bar { width:3px; height:13px; background:#1677ff; margin-right:8px; }
+  .wside .ws-head .tt { font-size:14px; font-weight:600; }
+  .wside .ws-body { flex:1; min-height:0; overflow:auto; padding:0 14px 14px; }
+  .wchead .side-toggle { margin-left:auto; height:26px; padding:0 11px; font-size:12px; font-weight:400; border:1px solid #dcdfe6; background:#fff; color:#4e5969; border-radius:4px; cursor:pointer; }
+  .wchead .side-toggle:hover { border-color:#1677ff; color:#1677ff; }
+  .wchead .side-toggle.on { background:#eef4ff; border-color:#9ec3ff; color:#1677ff; }
+  .wli { cursor:pointer; }
+  .ws-warn { display:none; align-items:center; gap:7px; background:#fdf6ec; border:1px solid #f5d9ab; color:#8a5b1f; border-radius:4px; padding:7px 10px; font-size:12px; margin-bottom:11px; }
+  .ws-warn.show { display:flex; }
+  .ws-warn .ico { width:14px; height:14px; border-radius:50%; background:#e6a23c; color:#fff; font-size:10px; display:flex; align-items:center; justify-content:center; flex:0 0 14px; font-weight:700; }
+  .ws-dim { border:1px solid #f0f2f5; border-radius:4px; margin-bottom:11px; }
+  .ws-dim .dh { height:36px; display:flex; align-items:center; padding:0 11px; background:#fafbfc; border-bottom:1px solid #f0f2f5; font-size:12.5px; font-weight:600; border-radius:3px 3px 0 0; }
+  .ws-dim .dh .bar { width:3px; height:11px; background:#1677ff; margin-right:7px; }
+  .ws-dim .db { padding:10px 11px 12px; display:flex; flex-direction:column; gap:10px; }
+  .ws-dim .tiles { gap:7px; }
+  .ws-dim .tile { padding:8px 10px; border-radius:8px; }
+  .ws-dim .tile .tv { font-size:15px; margin-top:3px; }
+  .ws-dim .rankbar-row { height:28px; gap:7px; }
+  .ws-dim .rnm { font-size:12px; max-width:52%; }
+  .ws-dim .rnm .nm-t { max-width:118px; }
+  .ws-dim .rnm .tie { font-size:9.5px; padding:1px 3px; }
+  .ws-dim .rv { width:36px; flex:0 0 36px; font-size:12px; }
+  .ws-dim .bar-wrap { height:6px; }
+  .ws-empty { display:none; flex:1; flex-direction:column; align-items:center; justify-content:center; gap:13px; }
+  .ws-empty.show { display:flex; }
+  .ws-empty .eico { width:58px; height:58px; border-radius:50%; background:#f2f3f5; display:flex; align-items:center; justify-content:center; }
+  .ws-empty .eico::after { content:""; width:23px; height:23px; border:3px solid #c2c7d0; border-radius:50%; }
+  .ws-empty .etxt { color:#86909c; font-size:13px; }
+
+  /* ================= 原型演示控制 ================= */
+  .demo { position:fixed; right:16px; top:16px; width:236px; background:#fff; border-radius:6px; box-shadow:0 6px 24px rgba(20,32,53,.18); padding:12px 14px 13px; z-index:99; }
+  .demo .dt { font-size:13px; font-weight:600; display:flex; align-items:center; gap:7px; margin-bottom:10px; }
+  .demo .dt::before { content:""; width:3px; height:12px; background:#1677ff; }
+  .demo .dt .fold { margin-left:auto; width:22px; height:18px; border:1px solid #d6dbe3; border-radius:3px; background:#fff; color:#86909c; font-size:11px; line-height:1; padding:0; }
+  .demo.folded .dl, .demo.folded .drow, .demo.folded .todo { display:none; }
+  .demo .dl { font-size:11.5px; color:#86909c; margin:8px 0 5px; }
+  .demo .drow { display:flex; gap:6px; flex-wrap:wrap; }
+  .demo .dbtn { flex:1; height:26px; border-radius:3px; border:1px solid #d6dbe3; background:#fff; font-size:12px; color:#4e5969; padding:0 6px; white-space:nowrap; }
+  .demo .dbtn.on { background:#1677ff; border-color:#1677ff; color:#fff; }
+  .demo .todo { font-size:11px; color:#86909c; line-height:1.8; border-top:1px dashed #e5e8ee; margin-top:10px; padding-top:7px; }
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <aside class="sidebar">
+    <div class="menu-group">数据应用</div>
+    <div class="menu-item active" id="mConsole" onclick="setScene('console')">用户画像查询</div>
+    <div class="menu-item" id="mWecom" onclick="setScene('wecom')">企微侧边栏应用</div>
+  </aside>
+  <div class="app"><div class="main">
+    <header class="topbar">
+      <div class="logo"></div><div class="sys">钱坤股海通</div><div class="divi"></div><div class="sub">综合业务平台</div>
+      <div class="acct"><div class="dot">管</div>管理员</div>
+    </header>
+    <div class="content">
+
+      <!-- ============ 页面一：用户画像查询 ============ -->
+      <div class="page active" id="pageConsole">
+        <div class="panel filter-panel">
+          <label>用户标识</label>
+          <input class="ipt" id="qInput" placeholder="请输入昵称 / 账号">
+          <button class="btn primary" onclick="doQuery()">查 询</button>
+          <button class="btn" onclick="resetQuery()">重 置</button>
+        </div>
+        <div class="warn-banner" id="bannerConsole"><span class="ico">!</span><span>数据暂未更新，当前展示前一日（2026-11-02）画像数据</span></div>
+        <div class="panel user-bar" id="userBar">
+          <img class="avatar-img" id="uAvatarImg" alt="">
+          <div>
+            <div class="uname" id="uName">陈志远</div>
+            <div class="meta" style="margin-top:5px;"><span>昵称：<b id="uNick">LDLD170862</b></span><span>账号：<b id="uId">GHT88472559570</b></span><span>圈子：<b id="uCircle">职业投资训练营</b></span></div>
+          </div>
+        </div>
+        <div class="panel kpi-band" id="kpiBand">
+          <div class="kpi"><div class="kl">圈子访问频次</div><div class="kv" id="kpi1">18次</div></div>
+          <div class="kpi"><div class="kl">老师互动频次</div><div class="kv" id="kpi2">26次</div></div>
+          <div class="kpi"><div class="kl">视频课程观看时长</div><div class="kv" id="kpi3">187分钟</div></div>
+          <div class="kpi"><div class="kl">软件指标使用频次</div><div class="kv" id="kpi4">34次</div></div>
+        </div>
+        <div class="detail-wrap" id="detailWrap">
+          <div class="panel dim-card">
+            <div class="card-head"><div class="bar"></div><div class="tt">圈子维度</div><span class="dim-help">?<span class="tip">统计周期为近5日（T+1更新）。累计统计用户进入圈子、与老师互动（点赞/评论/收到/献花）等行为频次；偏好 TOP 榜按互动次数降序排列，次数相同时并列展示名次。<span class="tip-date">数据更新：<span class="dtx">2026-11-04</span></span></span></span></div>
+            <div class="card-body" id="dimCircle"></div>
+          </div>
+          <div class="panel dim-card">
+            <div class="card-head"><div class="bar"></div><div class="tt">课程和直播维度</div><span class="dim-help">?<span class="tip">统计周期为近5日（T+1更新）。累计统计用户观看视频课程与直播的时长、次数及是否观看；未观看或无观看记录的指标以"-"展示。<span class="tip-date">数据更新：<span class="dtx">2026-11-04</span></span></span></span></div>
+            <div class="card-body" id="dimCourse"></div>
+          </div>
+          <div class="panel dim-card">
+            <div class="card-head"><div class="bar"></div><div class="tt">软件特色指标维度</div><span class="dim-help">?<span class="tip">统计周期为近5日（T+1更新）。累计统计用户使用软件特色业务指标的调用频次；偏好 TOP 榜同口径并列排名，无使用记录的指标以"-"展示。<span class="tip-date">数据更新：<span class="dtx">2026-11-04</span></span></span></span></div>
+            <div class="card-body" id="dimFeat"></div>
+          </div>
+        </div>
+        <div class="panel empty-panel" id="emptyConsole"><div class="eico"></div><div class="etxt">该用户无画像数据</div></div>
+        <div class="panel empty-panel" id="initConsole"><div class="eico"></div><div class="etxt">请输入用户标识（昵称 / 账号）开始查询</div></div>
+      </div>
+
+      <!-- ============ 页面二：企微侧边栏应用 ============ -->
+      <div class="page" id="pageWecom">
+        <div class="wecom-shell"><div class="wecom"><div class="wapp">
+          <div class="wrail">
+            <div class="wlogo"></div>
+            <div class="wicon on"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M4 5h16v11H8l-4 4z" stroke-linejoin="round"/></svg></div>
+            <div class="wicon"><svg viewBox="0 0 24 24" fill="none" stroke="#9aa4b0" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.2-3.6 4-5 7-5s5.8 1.4 7 5" stroke-linecap="round"/></svg></div>
+            <div class="wicon"><svg viewBox="0 0 24 24" fill="none" stroke="#9aa4b0" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></div>
+            <div class="wicon" style="margin-top:auto; margin-bottom:18px;"><svg viewBox="0 0 24 24" fill="none" stroke="#9aa4b0" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke-linecap="round"/></svg></div>
+          </div>
+          <div class="wlist">
+            <div class="wsearch"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa1ab" stroke-width="2"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21" stroke-linecap="round"/></svg>搜索</div>
+            <div class="witems" id="chatList"></div>
+          </div>
+          <div class="wchat">
+            <div class="wchead"><span id="wChatName">陈志远</span><button class="side-toggle" id="btnSide" onclick="toggleSide()">用户画像</button></div>
+            <div class="wmsgs">
+              <div class="mgroup show" data-g="A">
+                <div class="msg cus"><img class="mava-img" data-uid="A" alt=""><div class="bubble">老师，今天龙头复盘的视频什么时候更新？</div></div>
+                <div class="msg me"><div class="mava me-ava">投</div><div class="bubble">下午4点更新，更新后会在您的服务通知里推送提醒。</div></div>
+                <div class="msg cus"><img class="mava-img" data-uid="A" alt=""><div class="bubble">好的。另外 MACD 这个指标我想调出来看，在哪里设置？</div></div>
+                <div class="msg me"><div class="mava me-ava">投</div><div class="bubble">行情页「业务指标」里可以直接调用，也可以加入您的常用指标。</div></div>
+              </div>
+              <div class="mgroup" data-g="B">
+                <div class="msg cus"><img class="mava-img" data-uid="B" alt=""><div class="bubble">老师，昨天的直播有回放吗？加班错过了。</div></div>
+                <div class="msg me"><div class="mava me-ava">投</div><div class="bubble">有的，回放已更新到课程中心，直接观看即可。</div></div>
+                <div class="msg cus"><img class="mava-img" data-uid="B" alt=""><div class="bubble">好的，谢谢老师。</div></div>
+              </div>
+              <div class="mgroup" data-g="N">
+                <div class="msg cus"><div class="mava" style="background:#9a6fe0;">黄</div><div class="bubble">课表链接收到了，本周三的直播几点开始？</div></div>
+                <div class="msg me"><div class="mava me-ava">投</div><div class="bubble">周三晚8点开播，开播前会有服务提醒。</div></div>
+                <div class="msg cus"><div class="mava" style="background:#9a6fe0;">黄</div><div class="bubble">好的，到时我来听。</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="wside" id="wSide" style="display:none;">
+            <div class="ws-head"><div class="bar"></div><div class="tt">用户画像</div></div>
+            <div class="ws-body">
+              <div class="ws-warn" id="bannerWecom"><span class="ico">!</span><span>数据暂未更新，当前展示前一日（2026-11-02）数据</span></div>
+              <div id="wDims"></div>
+            </div>
+            <div class="ws-empty" id="emptyWecom"><div class="eico"></div><div class="etxt">该用户无画像数据</div></div>
+          </div>
+        </div></div></div>
+      </div>
+
+    </div>
+  </div></div>
+</div>
+
+<!-- ============ 原型演示控制 ============ -->
+<div class="demo">
+  <div class="dt">原型演示控制<button class="fold" onclick="toggleDemo(this)">收起</button></div>
+  <div class="dl">演示用户（画像存在性）</div>
+  <div class="drow">
+    <button class="dbtn on" data-u="A" onclick="pickUser('A',this)">陈志远</button>
+    <button class="dbtn" data-u="B" onclick="pickUser('B',this)">林晚晴</button>
+    <button class="dbtn" data-u="N" onclick="pickUser('N',this)">无画像用户</button>
+  </div>
+  <div class="dl">数据同步状态</div>
+  <div class="drow">
+    <button class="dbtn on" id="syOk" onclick="setSync(false)">T+1同步正常</button>
+    <button class="dbtn" id="syFail" onclick="setSync(true)">同步失败</button>
+  </div>
+  <div class="todo">需求待确认项：① 中台查询是否按角色/机构细分（2.1）；② 企微侧是否全量同步12项指标（2.2）</div>
+</div>
+<div id="nameTip" class="name-tip"></div>
+
+<script>
+var USERS = {
+  A: {
+    name:'陈志远', nick:'LDLD170862', id:'GHT88472559570', circleName:'职业投资训练营',
+    trend:[['+3次','up'],['+5次','up'],['+22分钟','up'],['-2次','dn']],
+    circle:{ rows:[['圈子访问频次','18次',1],['圈子停留时长','426分钟',1],['老师互动频次','26次',1]],
+             rank:{ title:'老师互动频次Top3', list:[['王建国','12次',1,0],['李慕白','7次',2,1],['赵擎宇','7次',2,1]] } },
+    course:{ rows:[['是否观看视频课程','是',1],['视频课程观看时长','187分钟',1],['直播观看次数','5次',1],['直播观看时长','143分钟',1]],
+             rank:{ title:'观看课程次数Top3', list:[['盘中掘金-楚桂林老师20261019','9次',1,0],['盘中掘金-刘松老师-20261016','6次',2,1],['盘中掘金-楚桂林老师20261012','6次',2,1]] } },
+    feat:{ rows:[['软件指标使用频次','34次',1],['量化精选使用频次','11次',1]],
+           rank:{ title:'常用指标Top5', list:[['MACD','9次',1,0],['KDJ','7次',2,1],['均线金叉','7次',2,1],['换手率','5次',4,0],['量比','4次',5,0]] } }
+  },
+  B: {
+    name:'林晚晴', nick:'LWQ2093347', id:'GHT88472559613', circleName:'龙头训练营',
+    trend:[['+1次','up'],['-1次','dn'],['—',''],['+1次','up']],
+    circle:{ rows:[['圈子访问频次','6次',1],['圈子停留时长','96分钟',1],['老师互动频次','3次',1]],
+             rank:{ title:'老师互动频次Top3', list:[['王建国','3次',1,0]] } },
+    course:{ rows:[['是否观看视频课程','否',0],['视频课程观看时长','-',0],['直播观看次数','-',0],['直播观看时长','-',0]],
+             rank:{ title:'观看课程次数Top3', list:[] } },
+    feat:{ rows:[['软件指标使用频次','5次',1],['量化精选使用频次','-',0]],
+           rank:{ title:'常用指标Top5', list:[['MACD','3次',1,0],['换手率','2次',2,0]] } }
+  }
+};
+var CHATS = [
+  { uid:'A', name:'陈志远', last:'老师，今天龙头复盘的视频什么时候更新？', time:'10:24', color:'#e8a33d' },
+  { uid:'B', name:'林晚晴', last:'好的，谢谢老师', time:'昨天', color:'#5b8def' },
+  { uid:'N', name:'黄嘉仪', last:'[链接] 龙头训练营·本周课表', time:'周一', color:'#9a6fe0' },
+  { uid:'N2', name:'周明轩', last:'收到', time:'周一', color:'#3fb88f' }
+];
+var KEYMAP = [ { keys:['陈','志远','LDLD','170862','88472559570','2681'], uid:'A' }, { keys:['林','晚晴','LWQ','2093347','88472559613','3347'], uid:'B' } ];
+
+var state = { scene:'console', uid:'A', syncFail:false, notFound:false, blank:true, query:'' };
+var AVATARS = { A:'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBAUEBAYFBQUGBgYHCQ4JCQgICRINDQoOFRIWFhUSFBQXGiEcFxgfGRQUHScdHyIjJSUlFhwpLCgkKyEkJST/2wBDAQYGBgkICREJCREkGBQYJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCT/wAARCACQAJADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD6oXpS0i9KWgAxRiiqWp6vbaVHumbLkfLGv3m/+t70CbS1ZdOAMnAxWRfeJrCzJRHM8g/hj5A/HpXL6nr13qZKu/lw9okPH4+tZm6tVT7mEq38pv3Xi+9lyIEigX1xuP5n/CsubV7+4OJLuds9g2B+QrzDxV8WpfCms3GlXehF5E+aGUXOEljPRsbcj0I9RXAeIfit4h11GhSZdOtm4MdqSGYehc8n8MU9ELlnLqe6al4s0bSn2alrNnbyf3JJhu/LrTtL8VaNqz7NO1izuJP7kcw3fl1r5b86EEs6uSerE9ad5kPEkeQRyMnP69RRzD9j5n17Fqt9b/6u7nXHbcSP1rStfFt7FgTLHOvuNp/MV8q6L8SNZ09lt5NRutq8JKW3vF6cHiRPVW59CDXsngHxtH4y0p5XRIr21fyrmNDlc4yHXPO1h0z05FGjJanDW57FY+JrC7IV2MDntJ0/PpWqCDyMGvL81paZrt3ppAR/MiHWNzx+HpUuHYqNb+Y7+jFUdL1e21SPdE21x96NvvD/ABHvV6szdO+qDFGKKKBiL0paRelU9X1SPSrNpmwzn5UT+81C1E3bVlbXtdTSotkeHuXHyqeij1NcPPcS3MzTTSNJIxyWNFxcS3UzzTOXkc5JNR1vGNjknNyYE8VxPxO8bP4T0qOGyYDUrzKxEjPlKPvPj15wPf6V2ma8G+Ni3P8Awl6STOFiNqggAOcKM5JHu278qG9B04py1OGuLma4meaZ3mlc7nkkbJY+pJ61Gt88Q4MePYit/wAC+CLjxveyA3DRWkBCuVA3Ox5AUdBwMknpXs+j/B7wtpmx2sjPMo+9LIX/AJ8fpXNOvGDsejTw8pq/Q+dpLhZ8svyv2xxmqxlxyOMjB9DX0zq3wj8JavGwbT1tpD0ltgI2H5cH8RUmi/CnwnokW2PTI7hyMGW5/eMfz6fhis/rUbbF/VJX3PmTzWJjPdT19q3fDni3WfDVxPNo90luJtgk3RqwkC5wOQcdTX0DN8LPBshLLoNmjey8flmvEviP4Oi8G6vF9kL/AGK53bUY5MTDqAe45BH5VdOvGTsiKmGlGN3qj2zwH4uTxfo32o7BcQt5c6KMbWx3XnH5kenoOmFeD/A27lh8XXVqrfup7Ny654yjKVP6n8693BrqTujzpxs7E0E8ttKssTsjqchhXbaFriapH5cmEuFHzL2YeorhM1JBcSW0ySxMVkQ5UiiUbhCbiz02iqWj6mmq2azDCuPldf7p/wAKu1gdSd1cQHC5NcBr2qNql+zKf3MeVjHt3P411Hia/NlpThDiSb92vsD1P5Vwo4rSmupjVlryiHikNPprCtTCwzk9K8S+PcDReItOkbpJZY/KRv8AGvdYo8fMRyeleR/tE2TfYtG1FVOI3lgYjtkBh/6CaiTNKSfNcf8AAZQNM1BtuN13jdjriMV61nivOtB0nV9L8J6dp/hmK2juHgUvd3R+SEuAzPt5LMSeBjHr0qk2h/ETTZQtv45sbqU8+Tcnk/QMpry5JTk3c91Nwio2ueo7uehFBY56E1z/AIRufEMtpNF4kSyF3E+Fe2PDr6kdjSeMrrxFBaQR+G1sjdSvh3uT9xfUDuc1lbWxpfS9jot3HpXj3x6iP2XT5dhIW7YE44GY+n44rQi0D4iapNtuPHNnazLz5Fu3IPuFUfrWh4g0jVtV8K6hp/iaO2kuVhJju7U/JMyjcrhTyrAgAjGPTrWsUoSTuZu84uNrHD/AO0M/ibUJh0gsSP8AvqRR/Q17mDjgivJP2dbY/ZdZv2wDK8UC574BY4/76FewzR7huA5HWvUi9Dwqt+YhFOBpgNLVmTNXQtTOm3yux/cv8sg9vX8K74EEZFeXDrXdeGL77Zpqo5zJCfLPuOx/L+VZVF1N6MvsmD4vuvN1CO3B+WFOR7nn+WKwsVa1abz9VupCc5lYD6Dj+lVga0jojKbvJsMYpyLuf2pAalj6dOtAiQDJ5rh/ihp02peFdet3YNELdZIUI6OvzAg+uRj8a7cZ9KpatYC/hThWKMG2OPlkHPyn6gmuXEr3VLsd2BkudwfVWM/RrXfoUUaSvF5kSqJEALKNoGRniud8RfDGx1bxDp2qW919jht1Vbi2WESGcjqwdskFhwSc4PI5rr9PVIoBAg2rESgUdgOlW68+M3HY9ecIy+IqJaot+hgQxRtuAQkttGCQuT1xj+VOa0SW5WWUM8eACgbbkA8rkcjPqPep4XWQ7923buwffpQWCLuPQVN9blW0scR4a+F9joPiDUNUluBfQ3AfyLaWHaYS3Qlx8xKjgYI55610Wr2zxaM8csjymKMgyPjcw2kZOO9bO4iqOsFZLUxP8/mnawPcd6qU3LcmEFHY4j4XWEuneHdDt0IAaMyyqB1ZvmJPvyBXpArD8P2It/Nk2quTwqjhOBwPwArbXpXo4Ze65dzycbJe0UF0ViCRNrkdj0phFTT/AHQ3oark5rpOBjlNdB4RuvK1BoCflmTp7jn+Wa54GrulTm31G1kz0lXP0Jx/WlJXQ4uzTKkrb5HY92J/WkzTjGxdlUEkEil+zyj+H9aokaDViL7oxVYhkOGUg+9SxToqj5hSGT84pOvBpomVuAwpSTScU1ZlRk07oz/9VfSKDjLA/UGp3k2yYYgKMDk4yTTL6FgwuFBOBtfHp2NSIY7mIh1VwwwysMivJrQ5JtHvYaqqlNO+pRurGzknM3mpBc44KyYP5ZpttZWaTrLJcpNcY53S8/TGauW6Q6Rai2js7OS1GdqTQb9vOcZ64/GluPs2q2htTZ2kdqwxIkduE3+2euPxqbRte50e8Sqys42sGUnBwc4NUmX7TerG5ypJPHoBVmRo7SEBFVFUYRQMAVDYRkkzsMZG1M+nrV0Ic80c+Jq+zpt9S5FCkCBIxgdfrUgxTMmnqNxAr1UrKyPCbbd2IYmmRj0HrQsKL2z9asNhISB06VCDTRIGND/CPyqPyvLdXQ5wwOPxqXNLGNzqPUgUMvluixfw/Z7+4ixgLI2PzzUQ6Vp+J7fydREoHyzKD+I4P9Kx7l9kDEdTxUp3QSVmyC4lE2U42D9aqIpRin4ipFbBqGaTyyrH1xWi7GTJgDUsUpUgN0qFWDdOa5vxV490nw1buoniu77olrHIC2fViPuj9aQJX2Og1DV7O1u7bTZGdrm+DhI4+SEA+Zz6KOmfU1Rt7iTSbsW9yS0bfcf+8P8AGvOvhvrN1r/je81HUZfMuHtGC+iDcPlUdgBXqV3axahEElHK9x1H0rixUG0po9XAzjFuEupdV0lX5WDA+hodliTLMAPeuan0/U7DPls0sY6MvP5jtVQ/brk7ZHdV7k8Vw6HqcjLt9fvqFyYYGIjXhm9B/jV7R9esr67uNLiLR3dkqF4n6shHDr6r29jWUNlpH5cfX/PJrzXx/rF34e8W6bqmmzeTdJbcnqGXcflYdweeK78LTaTmzzMfOMmqcd0e7A+tSxEBuSBxXFeEviPpfiq1jUzQ2V/92S1kkAYn1TP3lP511CPtfJ7dc11nlt2di/I67QoIOTnrTBVNpPMYkdO1SRzFevIppC5izVnTofOv7ePHWRc/nmqykEZBra8L23m6gZSOIkJ/E8D+tTNmsdTX8SWX2rTvMUZeA7x9O/8An2rirsZgOOxBr0sAMuCMg8EV438ZNVk8D6DdG3YpPdkQ2jdxu6ke6gH9KzgzSpG4ajq1lpMPnahdwWsfrK4XP0HU/hXC+IPi7p0X7rSbaS8cf8tJMxx/4n9K8imvJ7uUy3E0k0nQvI5ZvzNGeOtacxHsktzoda8ea/rCMk9+8Nv/AM8bf92uPQ45P4mudTuT1JyaGyRjGQaSOLZkFjt/u9cVLZaSSOy+FV0YfGEC5+WWKRM+pwD/AEr3ENzXzz4OufsvibTpAdv74Jn0yCP617+bhY4PNkOMcEe/pWsNiZbkl1rFlpoj+23MMG84XewGaggn0zVZHls7iGfyztkETg4PbIHSvF/iXBfDxXJcTyuXmjXyI5PuCPGDGO3XnB659aT4Vi+XxcZrBnjt44SLuDs+c7V/PkHqMH8ef2FPnvY6FiaihbmPbbywjuIdqKqOvKkDH4GvBfim7P4oMZB/cQIhHoeSf5174bpTb+dH82eAPU+lfPXi+4N54m1KUnd++KZ9ccf0reWxzRWtzlzzjHUHIrp9C+IniLQ0WKC/ee3H/LC5/eLj2zyPwNYEtoHOUJH+z61FtK8YxjtWaNGk9z2fQPjRplwFi1e1lsn6eZH+8j/+KH613+m6zp2rwibT72C6j9YnDY+o6j8a+Wqmt7y4spVmtp5IZOgeNyrfmKvmMnSXQ+sbeZQ20sADXdeGrT7PpyykYac7zn07f5968f8AgtfTeN7C3Nwxkls2Md256sB90n3YEfrXuyqFUAAADoBWdR9iqUWtwXpXI/FD4f2vxE8My6c5WK9hJms5yP8AVygdD/snofz7V1y9KWszc+BtS0y80PVbnTdRt3tru3YxyxP1Vh/Mcgg9xg0ztX1n8Xvg/Z/EKzF/ZeXa67bIVhmPCzr/AM85Pb0Pb6ZFfKeqaVf6HqE+nalay2l5bttkhlGCp/qD2I4NaJ3JZVmBMZK9V+YfhT0YOAR0IzTVbkUyE7S0X908fQ0xF2zmNtcxTDrG6v8AkQa+jrZIruOC7OTlAQM8Z9frXzYOePWvoDwTe/bvDNhLnJ8pQfrjH8wauBnM4r44XdlHDYW7Rl7vEkobONqYxz+Pb2p/wQkRY9St5wPtuY59zH52jK4Gfy/I1z3xavYz4xn3lZXhgiiSM8qnG4lvfLcD8TUnwonNj4wjimkYz3du4ZCeVAwRu9z6du/Wj7Q0vdPZLxIraKa75XahJHbPr9a+bbib7TczTHrI7P8Amc17747vvsHhe+kBwTEwH5Y/mRXz4BgUTFBbikKmXyQoHI7VRXLDcerfNU12/wAixd3PP0qPpUGglT6bp15rWp22m6dbyXN3cN5cUSDl2P8AkknsOadpmmXutahBp2m20t3d3DbI4YlyzH/D1J4HevrH4OfBu1+Htp/aWo+Vda/cpiSUcrbL/wA84z/Nu/0pN2BI3PhZ8O7b4c+GY9PVlmvpyJr24A/1kmOg/wBlRwPz712VFFZliL0paRTxS5FABXJ+P/hnoPxDshFqUJiu41IgvYQBLF7Z/iX/AGTx9DzXWZFGaLgfGvjz4ReJvAUkktzbG900H5b+2UsgH+2OqH68e9cK77ZEl7fdJ9q/QNgrqVYAgjBB715v4x+AfgzxX5s0do2kXkmSZ7HCKT6tGflP4AH3quYmx8mhua9j+Ed95+gm2J5hkdQPbO4f+hGq2u/s0eKtNydJvLHV4xwAW8iUj6Nlf/HqsfDXwd4q8NX95batoN/aoxR1cx7kJ5U4ZcjuK0hLUiadjzr4gXCR+NdXuMq8/n7UHURBVADH/a44HbqaXwDiy8a6UZ2Y3EruCueUBQnLf7R9PzqDxTbXNl4j1O6ntZ1uJbuV4w8TARrvOGORycdB26ntSeFLOe38UaRO8M8s7zg7VRiUBB+ZiO5z0/E076lNe6elfGC/8nRUtgeZpFT8PvH+Qrx0Zr1v4jeFvE/ifU7S30nQdSu0QM7OkJCAkgDLNgdB696ZoX7Nni/VRnU57HRoyMHe/nygeyrx+bUptXJgtDxov5srydh8o+ldt4C+Enif4gSpJZWptNOJ+fULlSsWP9gdXP049SK+hPBv7PPg3wqY5ruB9bu48ESX2DGp9RGPl/PNenIiRqqIqqqjAAGAB6Cs3I1OR+Hvwt0D4c2ZTTojPeyqBPfTAGWX2H91f9kfjnrXYUZoyKkAooozQB//2Q==', B:'data:image/jpeg;base64,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' };
+
+function hasData(v){ return v !== '-'; }
+function valHTML(v){ return '<span class="m-val' + (hasData(v)?'':' muted') + '">' + v + '</span>'; }
+
+function renderDims(containerId, dim){
+  function parseNum(v){ var m = String(v).match(/^([\d.]+)/); return m ? parseFloat(m[1]) : 0; }
+  var h = '<div class="tiles">';
+  dim.rows.forEach(function(r){
+    var isYes = r[0]==='是否观看视频课程';
+    if (isYes){
+      h += '<div class="tile" style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;">'
+         + '<span class="tl">' + r[0] + '</span>'
+         + (r[1]==='是' ? '<span class="chip yes">✓ 已观看</span>' : '<span class="chip no">未观看</span>') + '</div>';
+      return;
+    }
+    h += '<div class="tile"><div class="tl">' + r[0] + '</div><div class="tv' + (hasData(r[1])?'':' muted') + '">' + r[1] + '</div></div>';
+  });
+  h += '</div>';
+  /* 偏好排名展示规则：未观看视频课程或排名无有效数据时，不展示排名明细 */
+  var watched = true;
+  dim.rows.forEach(function(r){ if (r[0]==='是否观看视频课程' && r[1]!=='是') watched = false; });
+  var hasRank = watched && dim.rank.list.some(function(r){ return hasData(r[1]); });
+  h += '<div class="sec-h">' + dim.rank.title + '<span class="tag p">偏好指标</span></div>';
+  if (!hasRank){
+    h += '<div style="color:#86909c;font-size:12.5px;padding:12px 0 4px;">暂无数据</div>';
+    document.getElementById(containerId).innerHTML = h;
+    return;
+  }
+  var max = 0;
+  dim.rank.list.forEach(function(r){ max = Math.max(max, parseNum(r[1])); });
+  dim.rank.list.forEach(function(r){
+    var pct = max ? Math.round(parseNum(r[1]) / max * 100) : 0;
+    h += '<div class="rankbar-row"><span class="rk2' + (r[2]===1?' top':'') + '">' + r[2] + '</span>'
+       + '<span class="rnm"><span class="nm-t" data-full="' + r[0] + '">' + r[0] + '</span>' + (r[3] ? '<span class="tie">并列第' + r[2] + '</span>' : '') + '</span>'
+       + '<span class="bar-wrap"><span class="bar-fill" style="width:' + pct + '%;"></span></span>'
+       + '<span class="rv">' + r[1] + '</span></div>';
+  });
+  document.getElementById(containerId).innerHTML = h;
+}
+
+function renderWecomDims(u){
+  var el = document.getElementById('wDims');
+  if (!u) { el.innerHTML=''; return; }
+  var TIPS = {
+    '圈子维度': '统计周期为近5日（T+1更新）。累计统计用户进入圈子、与老师互动（点赞/评论/收到/献花）等行为频次；偏好 TOP 榜按互动次数降序排列，次数相同时并列展示名次。<span class="tip-date">数据更新：<span class="dtx">2026-11-04</span></span>',
+    '课程和直播维度': '统计周期为近5日（T+1更新）。累计统计用户观看视频课程与直播的时长、次数及是否观看；未观看或无观看记录的指标以"-"展示。<span class="tip-date">数据更新：<span class="dtx">2026-11-04</span></span>',
+    '软件特色指标维度': '统计周期为近5日（T+1更新）。累计统计用户使用软件特色业务指标的调用频次；偏好 TOP 榜同口径并列排名，无使用记录的指标以"-"展示。<span class="tip-date">数据更新：<span class="dtx">2026-11-04</span></span>'
+  };
+  var dims = [ ['圈子维度', u.circle, 'dimW1'], ['课程和直播维度', u.course, 'dimW2'], ['软件特色指标维度', u.feat, 'dimW3'] ];
+  el.innerHTML = dims.map(function(d){
+    return '<div class="ws-dim"><div class="dh"><span class="bar"></span>' + d[0]
+      + '<span class="dim-help">?<span class="tip">' + TIPS[d[0]] + '</span></span></div><div class="db" id="' + d[2] + '"></div></div>';
+  }).join('');
+  renderDims('dimW1', u.circle);
+  renderDims('dimW2', u.course);
+  renderDims('dimW3', u.feat);
+}
+
+function matchQuery(q){
+  q = q.toLowerCase();
+  for (var i=0;i<KEYMAP.length;i++){
+    var m = KEYMAP[i];
+    for (var j=0;j<m.keys.length;j++){ if (q.indexOf(m.keys[j].toLowerCase()) > -1) return m.uid; }
+  }
+  return null;
+}
+
+function render(){
+  var u = state.notFound ? null : USERS[state.uid];
+  /* ---- 用户画像查询页 ---- */
+  document.querySelectorAll('.tip-date .dtx').forEach(function(el){ el.textContent = state.syncFail ? '2026-11-03' : '2026-11-04'; });
+  var showDetail = !!u && !state.blank;
+  document.getElementById('bannerConsole').className = 'warn-banner' + (state.syncFail && showDetail ? ' show' : '');
+  document.getElementById('userBar').style.display = showDetail ? 'flex' : 'none';
+  document.getElementById('kpiBand').style.display = showDetail ? 'flex' : 'none';
+  document.getElementById('detailWrap').style.display = showDetail ? 'flex' : 'none';
+  document.getElementById('emptyConsole').className = 'panel empty-panel' + (!state.blank && !showDetail ? ' show' : '');
+  document.getElementById('initConsole').className = 'panel empty-panel' + (state.blank ? ' show' : '');
+  if (u){
+    document.getElementById('uAvatarImg').src = AVATARS[state.uid];
+    document.getElementById('uName').textContent = u.name;
+    document.getElementById('uId').textContent = u.id;
+    document.getElementById('uNick').textContent = u.nick;
+    document.getElementById('uCircle').textContent = u.circleName;
+    document.getElementById('kpi1').textContent = u.circle.rows[0][1];
+    document.getElementById('kpi2').textContent = u.circle.rows[2][1];
+    document.getElementById('kpi3').textContent = u.course.rows[1][1];
+    document.getElementById('kpi4').textContent = u.feat.rows[0][1];
+    for (var k=1;k<=4;k++){
+      var t = u.trend[k-1];
+      var el = document.getElementById('kpi' + k);
+      var arrowHtml = t[1] ? ' <span class="arrow ' + t[1] + '">' + (t[1]==='up' ? '&#9650;' : '&#9660;') + '</span>' : '';
+      el.innerHTML = el.textContent.replace(/[▲▼]/g,'') + arrowHtml;
+    }
+    renderDims('dimCircle', u.circle);
+    renderDims('dimCourse', u.course);
+    renderDims('dimFeat', u.feat);
+  }
+  /* ---- 企微侧边栏 ---- */
+  document.getElementById('bannerWecom').className = 'ws-warn' + (state.syncFail && u ? ' show' : '');
+  document.getElementById('wDims').style.display = u ? 'block' : 'none';
+  document.getElementById('emptyWecom').className = 'ws-empty' + (u ? '' : ' show');
+  var cur = CHATS.filter(function(c){ return state.notFound ? c.uid==='N' : c.uid===state.uid; })[0] || CHATS[0];
+  document.getElementById('wChatName').textContent = u ? u.name : cur.name;
+  document.querySelectorAll('img.mava-img[data-uid="A"]').forEach(function(im){ im.src = AVATARS.A; });
+  document.querySelectorAll('img.mava-img[data-uid="B"]').forEach(function(im){ im.src = AVATARS.B; });
+  var g = state.notFound ? 'N' : state.uid;
+  document.querySelectorAll('.mgroup').forEach(function(m){ m.className = 'mgroup' + (m.getAttribute('data-g')===g ? ' show' : ''); });
+  if (u){
+    renderWecomDims(u);
+  }
+  /* 会话列表 */
+  var lh = '';
+  CHATS.forEach(function(c){
+    var nm = c.uid==='A' ? USERS.A.name : (c.uid==='B' ? USERS.B.name : c.name);
+    var on = (state.notFound && c.uid==='N') || (!state.notFound && c.uid===state.uid);
+    var av = AVATARS[c.uid]
+      ? '<img class="wava-img" src="' + AVATARS[c.uid] + '" alt="">'
+      : '<div class="wava" style="background:' + c.color + ';">' + nm[0] + '</div>';
+    lh += '<div class="wli' + (on?' on':'') + '">' + av
+        + '<div style="min-width:0;"><div class="wn">' + nm + '</div><div class="wp">' + c.last + '</div></div>'
+        + '<div style="margin-left:auto;font-size:11px;color:#9aa1ab;flex:0 0 auto;">' + c.time + '</div></div>';
+  });
+  document.getElementById('chatList').innerHTML = lh;
+}
+
+function setScene(s){
+  state.scene = s;
+  document.getElementById('pageConsole').className = 'page' + (s==='console'?' active':'');
+  document.getElementById('pageWecom').className = 'page' + (s==='wecom'?' active':'');
+  document.getElementById('mConsole').className = 'menu-item' + (s==='console'?' active':'');
+  document.getElementById('mWecom').className = 'menu-item' + (s==='wecom'?' active':'');
+}
+/* 企微画像侧栏：默认收起，点击开关按钮或点击会话进入时展示 */
+function toggleSide(force){
+  var el = document.getElementById('wSide');
+  var show = (typeof force === 'boolean') ? force : (el.style.display !== 'flex');
+  el.style.display = show ? 'flex' : 'none';
+  document.getElementById('btnSide').className = 'side-toggle' + (show ? ' on' : '');
+}
+document.getElementById('chatList').addEventListener('click', function(e){
+  var li = e.target.closest('.wli'); if (!li) return;
+  var lis = this.querySelectorAll('.wli');
+  var idx = Array.prototype.indexOf.call(lis, li);
+  var c = CHATS[idx]; if (!c) return;
+  var uid = (c.uid === 'N2') ? 'N' : c.uid;   /* 无画像演示数据统一走 N */
+  var btn = document.querySelector('[data-u="' + uid + '"]');
+  if (btn) pickUser(uid, btn);
+  toggleSide(true);
+});
+function pickUser(uid, btn){
+  document.querySelectorAll('[data-u]').forEach(function(b){ b.classList.remove('on'); });
+  btn.classList.add('on');
+  var input = document.getElementById('qInput');
+  state.blank = false;
+  if (uid === 'N'){
+    state.notFound = true; state.query = '钱小坤'; input.value = '钱小坤';
+  } else {
+    state.notFound = false; state.uid = uid; state.query = USERS[uid].name; input.value = USERS[uid].name;
+  }
+  render();
+}
+function setSync(fail){
+  state.syncFail = fail;
+  document.getElementById('syOk').className = 'dbtn' + (fail?'':' on');
+  document.getElementById('syFail').className = 'dbtn' + (fail?' on':'');
+  render();
+}
+function doQuery(){
+  var q = document.getElementById('qInput').value.trim();
+  if (!q) return;
+  state.blank = false;
+  var uid = matchQuery(q);
+  if (uid){ state.notFound = false; state.uid = uid; state.query = q;
+    document.querySelectorAll('[data-u]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-u')===uid); });
+  } else { state.notFound = true;
+    document.querySelectorAll('[data-u]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-u')==='N'); });
+  }
+  render();
+}
+function resetQuery(){
+  document.getElementById('qInput').value = '';
+  state.blank = true; state.notFound = false; state.uid = 'A'; state.query = '';
+  document.querySelectorAll('[data-u]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-u')==='A'); });
+  render();
+}
+function toggleDemo(btn){
+  var d = btn.closest('.demo');
+  d.classList.toggle('folded');
+  btn.textContent = d.classList.contains('folded') ? '展开' : '收起';
+}
+document.getElementById('qInput').addEventListener('keydown', function(e){ if (e.key === 'Enter') doQuery(); });
+/* 维度"？"点击切换浮窗；点击空白处关闭 */
+document.addEventListener('click', function(e){
+  var h = e.target.closest ? e.target.closest('.dim-help') : null;
+  document.querySelectorAll('.dim-help.show').forEach(function(x){ if (x !== h) x.classList.remove('show'); });
+  if (h) h.classList.toggle('show');
+});
+
+/* 偏好排名名称悬停浮层：仅在被截断时展示完整名称 */
+(function(){
+  var tip = document.getElementById('nameTip');
+  function hit(el){ return (el && el.closest) ? el.closest('.nm-t') : null; }
+  document.addEventListener('mouseover', function(e){
+    var t = hit(e.target);
+    if (!t) { tip.style.display = 'none'; return; }
+    if (t.scrollWidth > t.clientWidth + 1) {
+      tip.textContent = t.getAttribute('data-full') || t.textContent;
+      tip.style.display = 'block';
+    } else { tip.style.display = 'none'; }
+  });
+  document.addEventListener('mousemove', function(e){
+    if (tip.style.display !== 'block') return;
+    var x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 10);
+    var y = e.clientY - tip.offsetHeight - 12;
+    tip.style.left = Math.max(8, x) + 'px';
+    tip.style.top = Math.max(8, y) + 'px';
+  });
+  document.addEventListener('mouseout', function(e){ if (hit(e.target)) tip.style.display = 'none'; });
+})();
+
+render();
+</script>
+</body>
+</html>
